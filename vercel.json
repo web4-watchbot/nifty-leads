@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "pnpm install --prod",
+  "installCommand": "pnpm install --ignore-scripts",
   "buildCommand": "cd apps/web && ./node_modules/.bin/next build",
   "outputDirectory": "apps/web/.next"
 }
