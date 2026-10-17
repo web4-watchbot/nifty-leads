@@ -67,10 +67,12 @@ export const accounts = pgTable("accounts", {
 export const verifications = pgTable("verifications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
-  type: text("type").notNull(),
+  // Nullable: better-auth never writes `type` (schema check warns if NOT NULL).
+  type: text("type"),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(), // required by better-auth
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

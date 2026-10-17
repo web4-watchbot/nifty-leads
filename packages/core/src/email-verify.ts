@@ -67,7 +67,7 @@ export async function verifyEmailBasic(input: string): Promise<EmailVerifyResult
     const mx = await resolveMxAsync(domain);
     mxOk = Array.isArray(mx) && mx.length > 0;
   } catch {
-    mxOk = false;
+    // DNS failure keeps mxOk = false.
   }
 
   if (!mxOk) {

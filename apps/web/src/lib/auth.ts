@@ -58,10 +58,28 @@ export const auth: any = betterAuth({
       },
     }),
   ],
+  databaseHooks: {
+    user: {
+      create: {
+        // Admin bootstrap (Section 4): first sign-ups from ADMIN_EMAILS get
+        // the `admin` role; everyone else is a normal user.
+        before: async (user) => ({
+          data: {
+            ...user,
+            role: isAdminEmail(user.email ?? "") ? "admin" : "user",
+          },
+        }),
+      },
+    },
+  },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
   },
   user: {
+    fields: {
+      // better-auth's default column is `image`; our column is `imageUrl`.
+      image: "imageUrl",
+    },
     additionalFields: {
       role: {
         type: "string",

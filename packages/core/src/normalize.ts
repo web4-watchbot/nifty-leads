@@ -12,7 +12,7 @@ const LEGAL_SUFFIXES = [
   "oyj", "ab", "bv", "nv", "kk", "plc",
 ];
 
-const PUNCT = /[.,&'\/\\\-_()\[\]{}]/g;
+const PUNCT = /[.,&'/\\\-_()[\]{}]/g;
 
 /**
  * Decode HTML entities in a string.

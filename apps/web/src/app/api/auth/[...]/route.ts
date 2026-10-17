@@ -6,10 +6,12 @@
 import { auth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
 
-const handler = toNextJsHandler(auth);
+// better-auth 1.7: toNextJsHandler returns per-method handlers —
+// exporting the whole object as a route handler crashes at runtime.
+const handlers = toNextJsHandler(auth);
 
-export const GET = handler;
-export const POST = handler;
-export const PUT = handler;
-export const PATCH = handler;
-export const DELETE = handler;
+export const GET = handlers.GET;
+export const POST = handlers.POST;
+export const PATCH = handlers.PATCH;
+export const PUT = handlers.PUT;
+export const DELETE = handlers.DELETE;
