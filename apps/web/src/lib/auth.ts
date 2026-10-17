@@ -52,9 +52,36 @@ export const auth: any = betterAuth({
   plugins: [
     emailOTP({
       sendVerificationOTP: async ({ email, otp, type }) => {
-        // System email (Section 8.5): login codes / OTP.
-        // Log in dev; send via configured provider in prod.
-        console.log(`[auth] ${type} OTP for ${email}: ${otp}`);
+        // System email (Section 8.5): login codes. Resend is the bootstrap
+        // provider here (the full provider picker moves to Admin Settings in
+        // Phase 1). Without RESEND_API_KEY the code is only logged — read it
+        // from the server logs (Vercel Dashboard → Deployments → Logs).
+        // Per better-auth docs: do not await the send (timing attacks); the
+        // fire-and-forget fetch completes before the serverless function
+        // freezes.
+        const apiKey = process.env.RESEND_API_KEY;
+        if (apiKey) {
+          const from =
+            process.env.RESEND_FROM ?? "Nifty Leads <onboarding@resend.dev>";
+          void fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from,
+              to: [email],
+              subject: `Your Nifty Leads code: ${otp}`,
+              html: `<p>Your Nifty Leads sign-in code:</p><p style="font-size: 24px; letter-spacing: 4px;"><strong>${otp}</strong></p><p>The code is valid for 5 minutes. If you did not request it, ignore this email.</p>`,
+              text: `Your Nifty Leads sign-in code: ${otp}. The code is valid for 5 minutes.`,
+            }),
+          }).catch((err) => {
+            console.error(`[auth] ${type} OTP email failed for ${email}:`, err);
+          });
+        } else {
+          console.log(`[auth] ${type} OTP for ${email}: ${otp}`);
+        }
       },
     }),
   ],
