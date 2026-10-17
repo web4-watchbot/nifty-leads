@@ -27,8 +27,10 @@ function isAdminEmail(email: string): boolean {
 // to keep the build portable. Auth runtime behavior is unaffected.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const auth: any = betterAuth({
-  database: db,
-  databaseAdapter: drizzleAdapter(db, {
+  // better-auth 1.7: the drizzleAdapter factory is passed as `database`.
+  // (The old `databaseAdapter` option was removed and is silently ignored,
+  // which makes better-auth mis-resolve the driver at runtime.)
+  database: drizzleAdapter(db, {
     provider: "pg",
     usePlural: true,
     schema: {
