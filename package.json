@@ -18,6 +18,7 @@
     "db:generate": "pnpm --filter @nifty-leads/db generate",
     "db:migrate": "pnpm --filter @nifty-leads/db migrate",
     "db:seed": "pnpm --filter @nifty-leads/db seed",
+    "deploy": "bash scripts/deploy.sh",
     "worker": "pnpm --filter @nifty-leads/worker dev"
   },
   "devDependencies": {

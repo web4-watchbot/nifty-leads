@@ -326,7 +326,16 @@ export const leads = pgTable("leads", {
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (t) => ({
+  // Indexes (migration 0001). Must live in the table callback: drizzle-orm
+  // 0.41 IndexBuilderOn.on() requires ExtraConfigColumn refs (t.col), not
+  // raw column objects — raw columns crash at import with
+  // `JSON.parse(JSON.stringify(undefined))`.
+  domain: index("leads_company_domain_idx").on(t.companyDomain),
+  run: index("leads_run_id_idx").on(t.runId),
+  list: index("leads_list_id_idx").on(t.listId),
+  crmStage: index("leads_crm_stage_idx").on(t.crmStage),
+}));
 
 export const leadPeople = pgTable("lead_people", {
   id: serial("id").primaryKey(),
@@ -353,7 +362,9 @@ export const rawLeads = pgTable("raw_leads", {
   sourceRecordId: text("source_record_id"),
   sourceUrl: text("source_url"),
   fetchedAt: timestamp("fetched_at").notNull().defaultNow(),
-});
+}, (t) => ({
+  run: index("raw_leads_run_id_idx").on(t.runId), // matches migration 0001
+}));
 
 // ---------------------------------------------------------------------------
 // CRM: Lists, stages, tags (Section 14)
@@ -600,13 +611,3 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// ---------------------------------------------------------------------------
-// Indexes
-// ---------------------------------------------------------------------------
-
-export const leadsIdx = {
-  domain: index("leads_company_domain_idx").on(leads.companyDomain),
-  run: index("leads_run_id_idx").on(leads.runId),
-  list: index("leads_list_id_idx").on(leads.listId),
-  crmStage: index("leads_crm_stage_idx").on(leads.crmStage),
-};
