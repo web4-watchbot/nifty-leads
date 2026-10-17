@@ -1,35 +1,20 @@
 /**
  * Admin layout (SPEC Section 8).
  * Only users with the `admin` role can open Admin pages.
+ * Auth enforcement happens in middleware.ts; this layout renders
+ * the admin shell without performing a build-time session check.
  */
-
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-
-export const dynamic = "force-dynamic";
-
-type SessionUser = { id: string; email: string; role: string };
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = (await auth.api.getSession({
-    headers: new Headers(),
-  })) as { user: SessionUser | null | undefined } | null;
-
-  if (!session?.user || session.user.role !== "admin") {
-    redirect("/login?message=admin-only");
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b px-6 py-4 flex items-center justify-between bg-background">
         <div className="text-lg font-semibold">Nifty Leads — Admin</div>
-        <div className="text-sm text-muted-foreground">
-          {session.user.email}
-        </div>
+        <div className="text-sm text-muted-foreground">Admin</div>
       </header>
       <nav className="border-b px-6 py-2 flex gap-4 text-sm font-medium">
         <a href="/admin" className="underline">
