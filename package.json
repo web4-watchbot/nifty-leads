@@ -1,0 +1,31 @@
+{
+  "name": "nifty-leads",
+  "private": true,
+  "description": "Nifty Leads — lead generation CRM with AI outreach",
+  "version": "0.1.0",
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "audit": "pnpm -r exec npm audit --audit-level=moderate",
+    "db:generate": "pnpm --filter @nifty-leads/db generate",
+    "db:migrate": "pnpm --filter @nifty-leads/db migrate",
+    "db:seed": "pnpm --filter @nifty-leads/db seed",
+    "worker": "pnpm --filter @nifty-leads/worker dev"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1",
+    "eslint": "^9.24.0",
+    "prettier": "^3.5.3",
+    "@types/node": "^22.14.0"
+  }
+}

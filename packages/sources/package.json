@@ -1,0 +1,13 @@
+{
+  "name": "@nifty-leads/sources",
+  "private": true,
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nifty-leads/core": "workspace:*"
+  }
+}

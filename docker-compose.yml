@@ -1,0 +1,56 @@
+# Docker Compose for Nifty Leads (SPEC Section 4).
+# One command on a VPS: docker compose up
+# The `web` service can also deploy to Vercel.
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: nifty-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: niftyleads
+    ports:
+      - "5432:5432"
+    volumes:
+      - nifty_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d niftyleads"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: nifty-web
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/niftyleads
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
+      AUTH_SECRET: ${AUTH_SECRET}
+      ADMIN_EMAILS: ${ADMIN_EMAILS}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "3000:3000"
+    command: sh -c "npx next dev -H 0.0.0.0"
+
+  worker:
+    build:
+      context: ./apps/worker
+      dockerfile: Dockerfile
+    container_name: nifty-worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/niftyleads
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-4}
+    command: sh -c "npx tsx src/index.ts"
+
+volumes:
+  nifty_postgres_data:

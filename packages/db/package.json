@@ -1,0 +1,38 @@
+{
+  "name": "@nifty-leads/db",
+  "private": true,
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./migrations/*": {
+      "types": "./src/migrations/*.ts",
+      "default": "./src/migrations/*.ts"
+    },
+    "./seed": {
+      "types": "./src/seed.ts",
+      "default": "./src/seed.ts"
+    }
+  },
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "migrate": "tsx src/migrate.ts",
+    "seed": "tsx src/seed.ts",
+    "typecheck": "tsc --noEmit",
+    "studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.41.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.30.4",
+    "tsx": "^4.19.3",
+    "@types/pg": "^8.15.0",
+    "typescript": "^5.8.3"
+  }
+}
