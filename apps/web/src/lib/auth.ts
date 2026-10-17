@@ -40,6 +40,19 @@ export const auth: any = betterAuth({
       verifications: dbSchema.verifications,
     },
   }),
+  // Multi-host origin handling (Vercel serves the app from the canonical
+  // domain AND the team alias; deployments have per-deploy hosts). Dynamic
+  // baseURL resolves the request host against allowedHosts per request and
+  // bypasses the BETTER_AUTH_URL env var. Exact hosts only — no wildcards.
+  baseURL: {
+    allowedHosts: [
+      "nifty-leads.vercel.app",
+      "nifty-leads-madansa7s-projects.vercel.app",
+      "localhost",
+      "127.0.0.1",
+    ],
+    fallback: "https://nifty-leads.vercel.app",
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
