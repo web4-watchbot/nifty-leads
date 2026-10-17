@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm --filter @nifty-leads/web build",
+  "outputDirectory": "apps/web/.next"
+}
