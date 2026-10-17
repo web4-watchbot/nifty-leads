@@ -47,9 +47,11 @@ export interface SourceConfig {
   extraHeaders?: Record<string, string>;
   rateLimitPerMinute: number;
   rateLimitPerDay: number;
+  costCreditsPerCall: number;
   reliability: number;
   canFill: LeadField[];
   allowedPlans: string[];
+  allowPrivateNetwork: boolean;
   httpOptions?: SSRFHttpOptions;
 }
 
