@@ -188,10 +188,10 @@ importers:
   apps/web:
     dependencies:
       '@nifty-leads/core':
-        specifier: file:../../packages/core
+        specifier: workspace:*
         version: link:../../packages/core
       '@nifty-leads/db':
-        specifier: file:../../packages/db
+        specifier: workspace:*
         version: link:../../packages/db
       better-auth:
         specifier: ^1.2.6
