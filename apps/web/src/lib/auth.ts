@@ -40,6 +40,16 @@ export const auth: any = betterAuth({
       verifications: dbSchema.verifications,
     },
   }),
+  // Our schema uses integer serial primary keys (users/sessions/accounts/
+  // verifications). better-auth defaults to generating random string ids,
+  // which Postgres rejects (22P02) when inserted into integer columns.
+  // `generateId: "serial"` is better-auth's documented strategy for DB-side
+  // auto-increment ids (verified in @better-auth/core factory.mjs).
+  advanced: {
+    database: {
+      generateId: "serial",
+    },
+  },
   // Multi-host origin handling (Vercel serves the app from the canonical
   // domain AND the team alias; deployments have per-deploy hosts). Dynamic
   // baseURL resolves the request host against allowedHosts per request and
