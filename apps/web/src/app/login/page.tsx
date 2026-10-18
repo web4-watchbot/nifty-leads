@@ -39,7 +39,17 @@ export default function LoginPage() {
       setError(err.message ?? "Wrong or expired code.");
       setBusy(false);
     } else {
-      window.location.href = "/";
+      // Land admins on the admin dashboard; everyone else on the homepage.
+      let target = "/";
+      try {
+        const { data } = await authClient.getSession();
+        if (data?.user && (data.user as { role?: string }).role === "admin") {
+          target = "/admin";
+        }
+      } catch {
+        // getSession failure is non-fatal — default landing applies.
+      }
+      window.location.href = target;
     }
   }
 
