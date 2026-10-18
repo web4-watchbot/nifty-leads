@@ -26,7 +26,9 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name"),
   imageUrl: text("image_url"),
-  emailVerified: timestamp("email_verified"),
+  // better-auth 1.7 stores this as boolean (get-tables.mjs: type "boolean",
+  // default false); OTP sign-in writes `true` on every login.
+  emailVerified: boolean("email_verified").notNull().default(false),
   password: text("password"),
   role: text("role").notNull().default("user"), // "admin" | "user"
   planSource: text("plan_source").notNull().default("internal"), // "internal" | "wordpress"
