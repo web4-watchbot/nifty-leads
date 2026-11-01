@@ -1,5 +1,0 @@
-{
-  "version": 2,
-  "installCommand": "pnpm install --ignore-scripts",
-  "buildCommand": "./node_modules/.bin/next build"
-}

@@ -1,0 +1,343 @@
+// NIFTY LEAD FINDER — Prisma schema
+// Postgres-backed (Supabase). All tables live in the "leadfinder" schema.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["leadfinder"]
+}
+
+// ---------------------------------------------------------------------------
+// Users & sessions (lightweight, passwordless demo mode by default)
+// ---------------------------------------------------------------------------
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  plan      String   @default("free") // free | pro | business
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  settings      UserSettings?
+  searches      SearchJob[]
+  leads         Lead[]
+  lists         LeadList[]
+  exportJobs    ExportJob[]
+  apiConnections ApiConnection[]
+
+  @@schema("leadfinder")
+}
+
+model UserSettings {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultSources String   @default("web,youtube,business") // CSV
+  defaultCountry String   @default("worldwide")
+  maxResults     Int      @default(50)
+  theme          String   @default("dark")
+  retentionDays  Int      @default(365)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@schema("leadfinder")
+}
+
+model ApiConnection {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     String   // brave | exa | youtube | hunter | apollo | ai | ...
+  label        String   @default("")
+  apiKey       String   @default("") // server-side only, never sent to client
+  enabled      Boolean  @default(false)
+  lastTestedAt DateTime?
+  lastStatus    String   @default("untested") // ok | error | untested
+  lastError    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, provider])
+
+  @@schema("leadfinder")
+}
+
+// ---------------------------------------------------------------------------
+// Search jobs
+// ---------------------------------------------------------------------------
+
+model SearchJob {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query        String
+  rawQuery     String
+  sources      String   // CSV
+  filters      String   @default("{}") // JSON
+  status       String   @default("queued") // queued | running | completed | failed | paused | cancelled
+  progress     Int      @default(0)
+  totalResults Int      @default(0)
+  uniqueLeads  Int      @default(0)
+  withEmails   Int      @default(0)
+  withPhones   Int      @default(0)
+  withWebsites Int      @default(0)
+  durationMs   Int      @default(0)
+  isBulk       Boolean  @default(false)
+  bulkParentId String?
+  generatedQueries String @default("[]") // JSON array of expanded queries
+  errorMessage String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  results      SearchResult[]
+  leads        Lead[]
+
+  @@schema("leadfinder")
+}
+
+model SearchResult {
+  id           String   @id @default(cuid())
+  jobId        String
+  job          SearchJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  provider     String
+  title        String
+  url          String
+  snippet      String
+  displayUrl   String
+  position     Int      @default(0)
+  metadata     String   @default("{}") // JSON
+  createdAt    DateTime @default(now())
+
+  @@index([jobId])
+
+  @@schema("leadfinder")
+}
+
+// ---------------------------------------------------------------------------
+// Leads & CRM
+// ---------------------------------------------------------------------------
+
+model Lead {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId         String?
+  job           SearchJob? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  // Identity
+  businessName  String?
+  contactPerson String?
+  position      String?
+  description   String?
+
+  // Contact
+  email         String?
+  emailExtra    String?  // CSV of additional published emails
+  phone         String?
+  phoneExtra    String?
+  website       String?
+
+  // Location
+  address       String?
+  city          String?
+  state         String?
+  country       String?
+  postalCode    String?
+  latitude      Float?
+  longitude     Float?
+
+  // Categorisation
+  industry      String?
+  leadType      String?  // business | individual | freelancer | creator | agency | decision_maker | local_service
+  businessSize  String?
+
+  // Social
+  linkedinUrl   String?
+  youtubeUrl    String?
+  instagramUrl  String?
+  facebookUrl   String?
+  xUrl          String?
+  tiktokUrl     String?
+  githubUrl     String?
+  otherProfiles String?  // CSV
+
+  // Quality
+  relevanceScore    Int     @default(0)   // 0-100
+  completenessScore Int     @default(0)   // 0-100
+  emailStatus       String  @default("not_found") // verified | publicly_listed | inferred | invalid | not_found
+  phoneStatus       String  @default("not_found")
+  verificationStatus String @default("unverified") // verified | unverified
+
+  // Provenance
+  sourceProvider    String?
+  sourceUrl         String?
+  sourcesJson       String  @default("[]") // JSON array of {provider,url,title,date}
+  aiSummary         String?
+  relevanceReason   String?
+
+  // CRM
+  status        String   @default("new") // new | reviewed | qualified | contacted | follow_up | converted | not_interested | archived
+  notes         String   @default("")
+  tags          String   @default("") // CSV
+  isSaved       Boolean  @default(false)
+  savedAt       DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  listItems     LeadListItem[]
+  notesLog      LeadNote[]
+  statusHistory LeadStatusHistory[]
+
+  @@index([userId])
+  @@index([userId, isSaved])
+  @@index([userId, status])
+
+  @@schema("leadfinder")
+}
+
+model LeadList {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String   @default("")
+  color       String   @default("cyan")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items       LeadListItem[]
+
+  @@index([userId])
+
+  @@schema("leadfinder")
+}
+
+model LeadListItem {
+  id        String   @id @default(cuid())
+  listId    String
+  list      LeadList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  addedAt   DateTime @default(now())
+
+  @@unique([listId, leadId])
+
+  @@schema("leadfinder")
+}
+
+model LeadNote {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+
+  @@schema("leadfinder")
+}
+
+model LeadStatusHistory {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromStatus String?
+  toStatus   String
+  changedAt  DateTime @default(now())
+
+  @@schema("leadfinder")
+}
+
+// ---------------------------------------------------------------------------
+// Exports
+// ---------------------------------------------------------------------------
+
+model ExportJob {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope       String   // all_results | selected | filtered | saved_list | enriched | email_available | phone_available | businesses | professionals
+  format      String   // csv | xlsx
+  columns     String   @default("[]") // JSON array
+  filters     String   @default("{}") // JSON
+  rowCount    Int      @default(0)
+  fileSize    Int      @default(0)
+  fileName    String
+  status      String   @default("queued") // queued | completed | failed
+  errorMessage String?
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  @@schema("leadfinder")
+}
+
+// ---------------------------------------------------------------------------
+// Provider usage & audit
+// ---------------------------------------------------------------------------
+
+model ProviderUsage {
+  id        String   @id @default(cuid())
+  provider  String
+  userId    String?
+  endpoint  String
+  success   Boolean
+  durationMs Int
+  resultCount Int    @default(0)
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([provider, createdAt])
+
+  @@schema("leadfinder")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  String   @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+
+  @@schema("leadfinder")
+}
+
+model SuppressionRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  value     String   // email or phone
+  kind      String   // email | phone | domain
+  reason    String   @default("user_requested")
+  createdAt DateTime @default(now())
+
+  @@unique([userId, kind, value])
+
+  @@schema("leadfinder")
+}
+
+model SavedTemplate {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  category  String
+  query     String
+  sources   String   @default("")
+  filters   String   @default("{}")
+  isCustom  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+
+  @@schema("leadfinder")
+}
